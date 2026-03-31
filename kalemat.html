@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kalemat</title>
+<link href="https://fonts.googleapis.com/css2?family=Aref+Ruqaa:wght@400;700&family=Amiri:ital,wght@0,400;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d1117;
+    --surface: #161b22;
+    --surface2: #1c2330;
+    --border: #30363d;
+    --gold: #c9a84c;
+    --gold-light: #e8c96d;
+    --gold-dim: rgba(201,168,76,0.15);
+    --green: #3fb950;
+    --green-dim: rgba(63,185,80,0.15);
+    --text: #e6edf3;
+    --muted: #8b949e;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 48px;
+    background-image: radial-gradient(ellipse at 50% 0%, rgba(201,168,76,0.08) 0%, transparent 60%);
+  }
+
+  header {
+    text-align: center;
+    margin-bottom: 32px;
+    position: relative;
+    width: 100%;
+    max-width: 580px;
+  }
+
+  .stats-btn {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--muted);
+    cursor: pointer;
+    padding: 7px 12px;
+    font-size: 0.8rem;
+    font-family: 'DM Sans', sans-serif;
+    font-weight: 500;
+    transition: background 0.2s, color 0.2s;
+  }
+  .stats-btn:hover { background: var(--surface); color: var(--text); }
+
+  .logo {
+    font-family: 'Aref Ruqaa', serif;
+    font-size: 3.6rem;
+    font-weight: 700;
+    color: var(--gold);
+    line-height: 1.1;
+    direction: rtl;
+    text-shadow: 0 2px 24px rgba(201,168,76,0.25);
+  }
+
+  .bismillah {
+    font-family: 'Amiri', serif;
+    font-size: 0.95rem;
+    color: var(--muted);
+    margin-top: 6px;
+  }
+
+  .date-label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    margin-top: 6px;
+    font-weight: 300;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .game-container { width: 100%; max-width: 580px; }
+
+  .clues-area {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+
+  .clue-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    min-height: 52px;
+    filter: blur(6px);
+    opacity: 0.45;
+    transition: filter 0.6s ease, opacity 0.6s ease;
+  }
+  .clue-card.revealed { filter: blur(0); opacity: 1; }
+  .clue-card.first-reveal { animation: slideIn 0.5s ease forwards; }
+
+  .clue-number {
+    font-family: 'Amiri', serif;
+    font-size: 1.1rem;
+    color: var(--gold);
+    min-width: 22px;
+    text-align: center;
+    padding-top: 1px;
+    flex-shrink: 0;
+  }
+  .clue-text { font-size: 0.92rem; line-height: 1.55; color: var(--text); }
+
+  .guess-area {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 16px;
+  }
+
+  .guess-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+
+  .guess-attempts { display: flex; gap: 6px; margin-bottom: 14px; }
+
+  .attempt-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--border);
+    transition: background 0.3s;
+  }
+  .attempt-dot.wrong   { background: #da3633; }
+  .attempt-dot.correct { background: var(--green); }
+
+  .input-wrapper { position: relative; }
+
+  input[type="text"] {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.95rem;
+    padding: 12px 16px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  input[type="text"]:focus { border-color: var(--gold); }
+
+  .autocomplete-list {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0; right: 0;
+    background: var(--surface2);
+    border: 1px solid var(--gold);
+    border-radius: 8px;
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 100;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+  .autocomplete-item {
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .autocomplete-item:last-child { border-bottom: none; }
+  .autocomplete-item:hover { background: var(--gold-dim); }
+  .autocomplete-item .item-name { color: var(--text); font-weight: 500; }
+  .autocomplete-item .item-alt  { color: var(--muted); font-size: 0.78rem; }
+
+  .submit-btn {
+    margin-top: 12px;
+    width: 100%;
+    background: var(--gold);
+    color: #0d1117;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: 0.04em;
+    transition: background 0.2s, transform 0.1s;
+  }
+  .submit-btn:hover    { background: var(--gold-light); }
+  .submit-btn:active   { transform: scale(0.98); }
+  .submit-btn:disabled { background: var(--border); color: var(--muted); cursor: not-allowed; }
+
+  .result-toast {
+    text-align: center;
+    padding: 16px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 16px;
+    display: none;
+  }
+  .result-toast.correct {
+    background: var(--green-dim);
+    border: 1px solid var(--green);
+    color: var(--green);
+    display: block;
+    animation: slideIn 0.4s ease;
+  }
+  .result-toast.wrong-final {
+    background: rgba(218,54,51,0.1);
+    border: 1px solid #da3633;
+    color: #f85149;
+    display: block;
+    animation: slideIn 0.4s ease;
+  }
+  .result-answer { font-size: 0.82rem; font-weight: 400; margin-top: 4px; opacity: 0.85; }
+
+  .share-btn {
+    margin-top: 12px;
+    width: 100%;
+    background: transparent;
+    color: var(--gold);
+    border: 1px solid rgba(201,168,76,0.4);
+    border-radius: 8px;
+    padding: 11px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+    display: none;
+  }
+  .share-btn:hover { background: var(--gold-dim); }
+  .share-btn.show  { display: block; }
+
+  .comeback {
+    text-align: center;
+    margin-top: 10px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    display: none;
+  }
+  .comeback.show { display: block; }
+  .countdown { color: var(--gold); font-weight: 600; }
+
+  .played-banner {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px;
+    text-align: center;
+    display: none;
+  }
+  .played-banner.show { display: block; }
+  .played-banner .pb-title {
+    font-family: 'Aref Ruqaa', serif;
+    font-size: 1.8rem;
+    color: var(--gold);
+    margin-bottom: 6px;
+    direction: rtl;
+  }
+  .played-banner .pb-sub { font-size: 0.85rem; color: var(--muted); margin-bottom: 16px; }
+  .played-banner .pb-result { font-size: 1rem; font-weight: 600; margin-bottom: 20px; }
+
+  /* Stats modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+  .modal-overlay.open { opacity: 1; pointer-events: all; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    width: 100%;
+    max-width: 420px;
+    padding: 28px 24px;
+    transform: translateY(16px);
+    transition: transform 0.25s ease;
+    position: relative;
+  }
+  .modal-overlay.open .modal { transform: translateY(0); }
+
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 16px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    font-size: 1.3rem;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--text); }
+
+  .modal-title {
+    font-family: 'Aref Ruqaa', serif;
+    font-size: 1.6rem;
+    color: var(--gold);
+    direction: rtl;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .modal-subtitle {
+    text-align: center;
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 24px;
+  }
+
+  .stat-tiles {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin-bottom: 24px;
+  }
+  .stat-tile {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 8px;
+    text-align: center;
+  }
+  .stat-tile .stat-val { font-size: 1.8rem; font-weight: 700; color: var(--gold); line-height: 1; }
+  .stat-tile .stat-lbl { font-size: 0.65rem; color: var(--muted); margin-top: 4px; line-height: 1.3; text-transform: uppercase; letter-spacing: 0.04em; }
+
+  .dist-title { font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 12px; }
+  .dist-row { display: flex; align-items: center; gap: 8px; margin-bottom: 7px; }
+  .dist-label { font-size: 0.82rem; color: var(--muted); min-width: 14px; text-align: right; }
+  .dist-bar-wrap { flex: 1; background: var(--surface2); border-radius: 4px; height: 22px; overflow: hidden; }
+  .dist-bar { height: 100%; background: var(--border); border-radius: 4px; display: flex; align-items: center; justify-content: flex-end; padding-right: 7px; font-size: 0.75rem; font-weight: 600; color: var(--text); min-width: 22px; transition: width 0.6s ease; }
+  .dist-bar.highlight { background: var(--gold); color: #0d1117; }
+  .dist-bar.green     { background: var(--green); color: #0d1117; }
+
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    20%     { transform: translateX(-6px); }
+    40%     { transform: translateX(6px); }
+    60%     { transform: translateX(-4px); }
+    80%     { transform: translateX(4px); }
+  }
+  .shake { animation: shake 0.4s ease; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">كَلِمَات</div>
+  <div class="bismillah">بِسْمِ اللَّهِ الرَّحْمَنِ الرَّحِيم</div>
+  <div class="date-label" id="dateLabel"></div>
+  <button class="stats-btn" id="statsBtn">📊 Stats</button>
+</header>
+
+<div class="game-container">
+
+  <div class="played-banner" id="playedBanner">
+    <div class="pb-title">كَلِمَات</div>
+    <div class="pb-sub">You've played today! Come back tomorrow for a new question.</div>
+    <div class="pb-result" id="pbResult"></div>
+    <button class="share-btn show" id="shareBtnBanner" style="margin-top:0">☽ Share Result</button>
+    <div class="comeback show" style="margin-top:14px">Next question in: <span class="countdown" id="countdownBanner"></span></div>
+  </div>
+
+  <div id="gameArea">
+    <div class="clues-area" id="cluesArea"></div>
+    <div id="resultToast" class="result-toast"></div>
+    <div class="guess-area">
+      <div class="guess-label">Your Answer</div>
+      <div class="guess-attempts" id="attemptDots"></div>
+      <div class="input-wrapper">
+        <input type="text" id="guessInput" placeholder="Start typing…" autocomplete="off" />
+        <div class="autocomplete-list" id="autocompleteList" style="display:none"></div>
+      </div>
+      <button class="submit-btn" id="submitBtn">Submit Guess</button>
+    </div>
+    <button class="share-btn" id="shareBtn">☽ Share Result</button>
+    <div class="comeback" id="comeback">Come back tomorrow! Next question in: <span class="countdown" id="countdown"></span></div>
+  </div>
+
+</div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <button class="modal-close" id="modalClose">✕</button>
+    <div class="modal-title">كَلِمَات</div>
+    <div class="modal-subtitle">Your Statistics</div>
+    <div class="stat-tiles">
+      <div class="stat-tile"><div class="stat-val" id="sPlayed">0</div><div class="stat-lbl">Played</div></div>
+      <div class="stat-tile"><div class="stat-val" id="sWinPct">0%</div><div class="stat-lbl">Win %</div></div>
+      <div class="stat-tile"><div class="stat-val" id="sStreak">0</div><div class="stat-lbl">Current Streak</div></div>
+      <div class="stat-tile"><div class="stat-val" id="sMaxStreak">0</div><div class="stat-lbl">Max Streak</div></div>
+    </div>
+    <div class="dist-title">Clue Distribution</div>
+    <div id="distRows"></div>
+  </div>
+</div>
+
+<script>
+const questions = [
+  {
+    answer: { name: "Al-Fatiha", variants: ["al-fatiha", "al fatiha", "fatiha", "surah fatiha", "surah al-fatiha", "al-fatihah"] },
+    clues: [
+      "Allah said: 'I have divided the prayer between Myself and My servant into two halves', referring to this surah.",
+      "It is referred to in a hadith as al-Sab' al-Mathani, the seven oft-repeated verses.",
+      "It is classified as both Makki and Madani by some scholars due to its dual revelation.",
+      "It was the first complete surah to be revealed to the Prophet \u262f.",
+      "It contains a supplication that encompasses every need, guidance, gratitude, and protection from misguidance."
+    ]
+  },
+  {
+    answer: { name: "Surah Al-Kahf", variants: ["surah al-kahf", "al-kahf", "surah kahf", "kahf", "the cave"] },
+    clues: [
+      "It was among the first responses revealed when the Quraysh consulted the Jews of Madinah on how to test the Prophet \u262f.",
+      "It contains one of the most profound encounters in the Quran, a prophet of Allah being humbled and taught by a figure of greater hidden knowledge, in a story that has no parallel elsewhere in the Quran.",
+      "It is considered the middle surah of the Quran, its 19th verse contains the word walyatalattaf, which sits at the exact midpoint of the entire Quranic text.",
+      "It contains four distinct narratives, the Companions of the Cave, the Two Gardens, Musa and Khidr, and Dhul-Qarnayn.",
+      "Reciting this Surah every Friday gives you protection from the Dajjal."
+    ]
+  },
+  {
+    answer: { name: "Surah Yasin", variants: ["surah yasin", "yasin", "ya sin", "surah ya-sin"] },
+    clues: [
+      "It poses one of the most rhetorically powerful questions in the Quran, asking how anyone can deny resurrection when Allah created them from nothing in the first place.",
+      "It uses the image of a dead earth brought to life by rain as a parable for the resurrection of human beings on the Day of Judgement.",
+      "It describes the moment of resurrection so vividly that the people will emerge from their graves rushing toward the caller, saying: 'Woe to us, who has raised us from our resting place?'",
+      "It contains the story of a believing man who ran from the far end of a city to defend three messengers, and was killed for it, entering Jannah immediately.",
+      "The Prophet \u262f described it as the heart of the Quran, scholars have debated the meaning of this description for centuries."
+    ]
+  },
+  {
+    answer: { name: "Surah Al-Baqarah", variants: ["surah al-baqarah", "al-baqarah", "baqarah", "surah baqarah"] },
+    clues: [
+      "Its final two verses were given to the Prophet \u262f directly on the night of Mi'raj.",
+      "The Prophet \u262f said that Shaytan flees the house in which it is recited.",
+      "It was revealed over the entire Madinan period and contains the change of qibla from Jerusalem to Makkah.",
+      "It contains the greatest verse in the Quran, Ayat al-Kursi, according to a statement of the Prophet \u262f.",
+      "It is the longest surah in the Quran, containing 286 verses."
+    ]
+  },
+  {
+    answer: { name: "Surah Al-Mulk", variants: ["surah al-mulk", "al-mulk", "mulk", "surah mulk", "tabarak"] },
+    clues: [
+      "It opens by declaring that all dominion belongs entirely to Allah, and that He created death before life as a test of deeds.",
+      "It describes the heavens as being built in seven layers, challenging mankind to find a single crack or flaw in the creation of Allah.",
+      "The Prophet \u262f said that it will intercede for its reciter on the Day of Judgement and will not rest until Allah forgives him.",
+      "It carries the name al-Mani'a, the Preventer, given to it by the Prophet \u262f himself for its power to shield its reciter from the punishment of the grave.",
+      "The Prophet \u262f said that this surah will argue on behalf of its reciter in the grave until it secures his release."
+    ]
+  },
+  {
+    answer: { name: "Surah Al-Ikhlas", variants: ["surah al-ikhlas", "al-ikhlas", "ikhlas", "surah ikhlas"] },
+    clues: [
+      "A companion said he loved this surah so much he recited it in every prayer, the Prophet \u262f told him his love for it would enter him into Jannah.",
+      "It was revealed in response to the Quraysh asking the Prophet \u262f to describe the lineage of his Lord.",
+      "It is the surah recited in the second rak'ah of the two rak'ahs performed after completing the tawaf around the Ka'bah.",
+      "The Prophet \u262f said that whoever recites it ten times, Allah will build a house for them in Paradise.",
+      "It is composed of just four verses yet the Prophet \u262f said it is equivalent to a third of the Quran."
+    ]
+  },
+  {
+    answer: { name: "Surah At-Tawbah", variants: ["surah at-tawbah", "at-tawbah", "tawbah", "surah tawbah", "surah bara'ah", "bara'ah"] },
+    clues: [
+      "It contains the verse that defines the eight categories of people eligible to receive Zakat, a verse that remains the foundation of Islamic financial law to this day.",
+      "When it was first proclaimed publicly, the Prophet \u262f sent Ali ibn Abi Talib (RA) to announce it at Hajj, as a message of such gravity could only be delivered by a member of the Prophet's \u262f own household.",
+      "It refers to three companions who stayed behind from the Battle of Tabuk without a valid excuse, recording their fifty-day boycott and eventual forgiveness directly in its verses.",
+      "It is the surah of the Quran most devoted to exposing the hypocrites.",
+      "It is the only surah in the Quran that does not begin with the Bismillah."
+    ]
+  },
+  {
+    answer: { name: "Abu Bakr al-Siddiq", variants: ["abu bakr", "abu bakr al-siddiq", "al-siddiq", "abu bakr siddiq"] },
+    clues: [
+      "He was the first adult male to accept Islam immediately upon hearing the Prophet's \u262f message without any hesitation.",
+      "He spent his wealth freeing enslaved Muslims including Bilal and seven others who were being tortured.",
+      "He led the prayers during the Prophet's \u262f final illness, a responsibility the Prophet \u262f specifically assigned to him.",
+      "He was the companion who hid with the Prophet \u262f in the Cave of Thawr during the Hijra, and the Prophet \u262f consoled him saying 'Allah is with us.'",
+      "He was given the title al-Siddiq, the one who affirms the truth, primarily for his instant acceptance of the Mi'raj."
+    ]
+  },
+  {
+    answer: { name: "Umar ibn al-Khattab", variants: ["umar", "umar ibn al-khattab", "omar", "umar al-khattab"] },
+    clues: [
+      "He introduced the Islamic lunar calendar, dating it from the Hijra.",
+      "He was the first caliph to take the title Amir al-Mu'minin, Commander of the Faithful.",
+      "His conversion came after he set out with a sword intending to kill the Prophet \u262f, but heard Quran being recited at his sister's home.",
+      "He was assassinated by Abu Lu'lu'a al-Majusi while leading Fajr prayer in the mosque.",
+      "The Prophet \u262f said: 'If there were a prophet after me it would be ____', acknowledging his extraordinary insight."
+    ]
+  },
+  {
+    answer: { name: "Uthman ibn Affan", variants: ["uthman", "uthman ibn affan", "othman"] },
+    clues: [
+      "He funded the entire preparation of the army for the expedition to Tabuk, which the Prophet \u262f praised highly.",
+      "He purchased the well of Rumah and made it available for all Muslims to drink from freely.",
+      "He commissioned the standardisation and distribution of the Quran into a single authoritative text during his caliphate.",
+      "He refused to flee or fight during the siege of his home, choosing martyrdom out of obedience to the Prophet's \u262f instruction.",
+      "He married two daughters of the Prophet \u262f, Ruqayyah and then Umm Kulthum, earning him the title Dhul-Nurayn, the one with two lights."
+    ]
+  },
+  {
+    answer: { name: "Ali ibn Abi Talib", variants: ["ali", "ali ibn abi talib", "ali ibn abu talib"] },
+    clues: [
+      "He was the scribe and signatory of the Treaty of Hudaybiyyah on behalf of the Prophet \u262f.",
+      "He was given the flag at the Battle of Khaybar after the Prophet \u262f said he would give it to someone who loves Allah and His Messenger.",
+      "The Prophet \u262f said to him: 'You are to me as Harun was to Musa, except there is no prophet after me.'",
+      "On the night of the Hijra he slept in the Prophet's \u262f bed, willing to face the swords of the Quraysh.",
+      "He was raised in the Prophet's \u262f household as a child, making him among the first to accept Islam."
+    ]
+  },
+  {
+    answer: { name: "Bilal ibn Rabah", variants: ["bilal", "bilal ibn rabah"] },
+    clues: [
+      "The Prophet \u262f heard his footsteps in Jannah during the Isra and Mi'raj, a foretelling of his station.",
+      "He was purchased and freed by Abu Bakr (RA) for a significant sum.",
+      "He would repeatedly say 'Ahad, Ahad', 'One, One', while being tortured for his faith.",
+      "He was an Abyssinian slave tortured by his master Umayyah ibn Khalaf with a rock placed on his chest under the desert sun.",
+      "He was the first to give the adhan in Islam and climbed the Ka'bah to call it on the day of the conquest of Makkah."
+    ]
+  },
+  {
+    answer: { name: "Khalid ibn al-Walid", variants: ["khalid", "khalid ibn al-walid", "khalid ibn walid"] },
+    clues: [
+      "He accepted Islam in 8AH alongside Amr ibn al-As and Uthman ibn Talha.",
+      "Umar ibn al-Khattab (RA) removed him from military command despite his victories, fearing people were attributing success to him rather than Allah.",
+      "He was never defeated in any battle throughout his military career, participating in over a hundred engagements.",
+      "He was the Qurayshi military commander who exploited a gap in the Muslim ranks at Uhud, nearly turning the tide against the Muslims.",
+      "The Prophet \u262f named him Sayfullah, the Sword of Allah."
+    ]
+  },
+  {
+    answer: { name: "Salman al-Farisi", variants: ["salman", "salman al-farisi", "salman farisi"] },
+    clues: [
+      "He was born into a Zoroastrian priestly family in Persia and left in search of truth, passing through Christianity before Islam.",
+      "A series of Christian scholars guided him toward a final prophet in Arabia, each one directing him to the next before dying.",
+      "He arrived in Arabia as a slave after being sold multiple times and was purchased by a Jewish man in Madinah.",
+      "He suggested digging a trench around Madinah, a Persian military tactic unknown to the Arabs, at the Battle of the Confederates.",
+      "The Prophet \u262f said: '____ is from us, the people of the house.'"
+    ]
+  },
+  {
+    answer: { name: "Fatima al-Zahra", variants: ["fatima", "fatima al-zahra", "fatimah"] },
+    clues: [
+      "She is described as the leader of the women of the people of Paradise, alongside Maryam and Asiya.",
+      "When she walked, her gait was indistinguishable from the Prophet's \u262f.",
+      "She was given the glad tidings by her father that she would be the first of his family to follow him in death.",
+      "She died six months after the Prophet \u262f, the first of his family to pass after him.",
+      "She was the youngest and most beloved of the Prophet's \u262f daughters, often called Umm Abiha, the mother of her father."
+    ]
+  },
+  {
+    answer: { name: "Khadijah", variants: ["khadijah", "khadija", "khadeejah"] },
+    clues: [
+      "She was twice widowed before her marriage to the Prophet \u262f and was known as al-Tahira, the pure one.",
+      "She sent her servant Maysara to accompany the Prophet \u262f on a trade journey to Syria.",
+      "She took the Prophet \u262f to her cousin Waraqah ibn Nawfal after the first revelation.",
+      "She bore the Prophet \u262f six children, two sons who died in infancy and four daughters.",
+      "She was one of the most successful businesswomen in all of Makkah, whose trade caravans rivalled those of the entire Quraysh combined."
+    ]
+  },
+  {
+    answer: { name: "Aisha", variants: ["aisha", "ayesha", "a'isha"] },
+    clues: [
+      "She led an army at the Battle of the Camel in 36AH, a decision she later deeply regretted.",
+      "She died on the 17th of Ramadan 58AH and was buried in Jannat al-Baqi by her nephew Abdullah ibn al-Zubayr.",
+      "She was one of the most knowledgeable people of her time, narrating over 2000 hadiths and issuing legal rulings that companions would travel great distances to seek.",
+      "She was falsely accused of impropriety during an expedition, and her innocence was declared directly by Allah in the Quran.",
+      "She was the daughter of the first caliph of Islam, who himself was the closest companion of the Prophet \u262f."
+    ]
+  },
+  {
+    answer: { name: "Nusayba bint Kab", variants: ["nusayba", "nusayba bint kab", "nusaybah", "umm ammara"] },
+    clues: [
+      "She was among the earliest women to pledge allegiance to the Prophet \u262f at the Second Pledge of Aqaba.",
+      "She was one of the few women present at the Battle of Uhud, tending to the wounded and distributing water.",
+      "When the Muslim lines broke and the Prophet \u262f was left exposed, she drew her sword and fought directly to protect him.",
+      "She received twelve wounds at Uhud, one of which was so severe it took a full year to heal.",
+      "She fought in subsequent expeditions including Khaybar and the War of Apostasy, during which she lost her hand."
+    ]
+  },
+  {
+    answer: { name: "Asma bint Abi Bakr", variants: ["asma", "asma bint abi bakr", "asmaa"] },
+    clues: [
+      "She was the elder sister of Aisha (RA) and earned the epithet Dhat al-Nitaqayn, She of the Two Girdles, during the Hijra.",
+      "She secretly supplied food to the Prophet \u262f and her father in the Cave of Thawr, hiding it from the Quraysh.",
+      "Her grandfather Abu Quhafa taunted her after her father took all his wealth for the Hijra, she responded by showing him stones wrapped in cloth to make him think wealth remained.",
+      "Abu Jahl confronted her and struck her when she refused to reveal the Prophet's \u262f whereabouts.",
+      "She lived to over 100 years old and died shortly after the martyrdom of her son Abdullah ibn al-Zubayr in Makkah."
+    ]
+  },
+  {
+    answer: { name: "Ibrahim", variants: ["ibrahim", "abraham", "ibraheem"] },
+    clues: [
+      "He grew up in a society ruled by a tyrant king whose astrologers predicted a newborn would one day overthrow him.",
+      "He is called the father of the prophets and is referred to in the Quran as a hanif, one who turns away from falsehood.",
+      "He was uniquely granted prophethood despite his father being a maker and worshipper of idols.",
+      "He was commanded by Allah to raise the foundations of the most sacred structure on earth alongside his son.",
+      "He was commanded in a dream to sacrifice his own son, and he complied without hesitation."
+    ]
+  },
+  {
+    answer: { name: "Musa", variants: ["musa", "moses", "moosa"] },
+    clues: [
+      "Allah spoke to him directly without an intermediary angel, earning him the title Kalimullah.",
+      "He fled his homeland after an unintentional killing and spent years as a shepherd in Madyan.",
+      "He was given two signs at the sacred valley, a staff that transformed and a hand that became radiant.",
+      "He requested that his brother be made a prophet alongside him to help articulate his message.",
+      "His birth occurred during a royal decree ordering the killing of all newborn males from his people."
+    ]
+  },
+  {
+    answer: { name: "Shahada", variants: ["shahada", "shahadah", "the shahada", "kalima"] },
+    clues: [
+      "It is whispered into the ear of a newborn and is the last thing a dying Muslim should hear and say.",
+      "The Prophet \u262f said that whoever's last words are this testimony is guaranteed Jannah.",
+      "It is the first pillar of Islam and its utterance with conviction and understanding is the entry point into the faith.",
+      "Its first half negates all objects of worship before affirming the sole divinity of Allah.",
+      "Its second half testifies to the prophethood and messenger status of Muhammad \u262f."
+    ]
+  },
+  {
+    answer: { name: "Salah", variants: ["salah", "salat", "prayer", "namaz"] },
+    clues: [
+      "The Prophet \u262f described it as the pillar of the deen, without which the deen cannot stand.",
+      "It has specific conditions of validity including purification, facing the qibla, and covering the awrah.",
+      "It is the one act of worship that was never suspended, even during times of illness, travel or fear, its form may change but it never falls away entirely.",
+      "It was made obligatory not by Jibreel (AS) delivering revelation but directly, during the Mi'raj.",
+      "The Prophet \u262f described it as the first thing a person will be asked about on the Day of Judgement, and if it is sound, everything else will be sound."
+    ]
+  },
+  {
+    answer: { name: "Hajj", variants: ["hajj", "haj", "pilgrimage"] },
+    clues: [
+      "It was made obligatory in the 9th year after the Hijra, and Abu Bakr (RA) led the first pilgrimage of the Muslim community.",
+      "It was the occasion of the final revelation, the completion of the deen, as stated in Surah Al-Ma'idah.",
+      "A hadith states that whoever performs it without obscenity or wrongdoing returns as clean of sin as the day his mother bore him.",
+      "It consists of specific rituals all tied to sites within a small radius, none exceeding 25 kilometres from the Ka'bah.",
+      "The standing at Arafat, the sa'i, and the tawaf around the Ka'bah all commemorate events from the story of Ibrahim, Hajar and Ismail (AS)."
+    ]
+  },
+  {
+    answer: { name: "Tawhid", variants: ["tawhid", "tawheed", "monotheism"] },
+    clues: [
+      "The Prophet \u262f spent thirteen years in Makkah establishing it before moving to matters of law and social order.",
+      "Scholars divide it into three categories: Rububiyyah (lordship), Uluhiyyah (worship) and al-Asma wal-Sifat (names and attributes).",
+      "The Quran describes it as the message of every prophet, from Adam (AS) to Muhammad \u262f, without exception.",
+      "Its negation, attributing partners to Allah, is described in the Quran as the one sin Allah will not forgive if a person dies upon it.",
+      "It is the central theological principle of Islam, from which all doctrine and worship derive."
+    ]
+  },
+  {
+    answer: { name: "Sabr", variants: ["sabr", "patience", "sabr (patience)"] },
+    clues: [
+      "It is mentioned in the Quran approximately 90 times, more than almost any other quality.",
+      "Allah repeatedly promises in the Quran that He is with those who exercise it.",
+      "The Prophet \u262f said it is half of faith.",
+      "It comes in different forms, each one tested differently, whether through acts of worship, staying away from sin, or accepting what Allah has decreed.",
+      "The parable of Yusuf (AS) and Ayyub (AS) in the Quran are its most profound illustrations, endurance through betrayal and illness without complaint."
+    ]
+  },
+  {
+    answer: { name: "Qibla", variants: ["qibla", "qiblah", "direction of prayer"] },
+    clues: [
+      "The Prophet \u262f would repeatedly turn his face to the sky in anticipation of a revelation that would change something fundamental about the prayer.",
+      "It was changed by divine command approximately 16 to 17 months after the Hijra.",
+      "A congregation once physically turned mid-prayer upon receiving news of a new divine command, completing their remaining rak'ahs in a different direction.",
+      "Ibrahim (AS) was commanded to build the structure toward which the entire Muslim world now orients itself in prayer.",
+      "Every Muslim on earth faces the same direction when they pray, a practice that visually unifies the entire ummah in worship."
+    ]
+  },
+  {
+    answer: { name: "Day of Judgement", variants: ["day of judgement", "day of judgment", "yawm al-qiyamah", "judgement day", "the day of judgement"] },
+    clues: [
+      "It is a day so momentous that Allah has given it more names in the Quran than almost any other concept, each name reflecting a different terror or reality of that day.",
+      "The sun will be brought close to mankind, some narrations say within a mile, causing people to sweat according to their deeds.",
+      "The first blow of the trumpet will cause all living beings to fall unconscious, the second blow will resurrect them.",
+      "The records of deeds will be distributed, the righteous receiving theirs in the right hand and the wicked in the left or behind the back.",
+      "No soul will move from its place until it has been asked about its life, youth, wealth and knowledge."
+    ]
+  },
+  {
+    answer: { name: "Jannah", variants: ["jannah", "paradise", "heaven", "al-jannah"] },
+    clues: [
+      "The lowest in rank among its inhabitants will have a dominion ten times the size of this world.",
+      "Its greatest blessing, described as surpassing all others, is the vision of Allah, which will make every other pleasure seem insignificant.",
+      "Its soil is described as white musk, its buildings of bricks of gold and silver, and its mortar of fragrant saffron.",
+      "The Prophet \u262f said that in it there is what no eye has seen, no ear has heard, and no heart has imagined.",
+      "It has eight gates, each associated with a different type of deed, one gate is exclusively for those who fasted."
+    ]
+  },
+  {
+    answer: { name: "Jahannam", variants: ["jahannam", "hellfire", "hell", "the fire", "naar"] },
+    clues: [
+      "The lightest punishment within it, described in hadith, is for a man to have burning embers placed beneath his feet which cause his brain to boil.",
+      "It will be brought on the Day of Judgement restrained by an unimaginable number of ropes, each held by an unimaginable number of angels.",
+      "It complained to Allah about its own intensity and was granted two breaths each year, felt by mankind as the most extreme heat and biting cold of the seasons.",
+      "Even one who worshipped Allah for thousands of years before his rejection will not be spared from it.",
+      "It has seven gates, each allocated a designated portion of those destined for it."
+    ]
+  },
+  {
+    answer: { name: "Dajjal", variants: ["dajjal", "al-dajjal", "the dajjal", "antichrist"] },
+    clues: [
+      "He will travel the entire earth except for Makkah and Madinah, which are protected by angels.",
+      "The Prophet \u262f said there has been no greater fitnah since the creation of Adam than this figure.",
+      "He will be killed by Isa (AS) at the gate of Ludd in present-day Israel, after which Isa (AS) will rule with justice.",
+      "He will claim to be God and produce seemingly miraculous feats, including apparent death and revival of individuals.",
+      "He is described as one-eyed with the word kafir, disbeliever, written on his forehead, legible even to illiterate believers."
+    ]
+  },
+  {
+    answer: { name: "Laylat al-Qadr", variants: ["laylat al-qadr", "laylatul qadr", "night of power", "night of decree", "lailatul qadr"] },
+    clues: [
+      "It is characterised by a calm, mild night and a sun that rises the following morning without rays.",
+      "The Prophet \u262f taught a specific supplication for it: 'Allahumma innaka afuwwun tuhibbul afwa fa'fu anni.'",
+      "Angels and Jibreel (AS) descend during it with every decree for the coming year.",
+      "It is described in the Quran as being better than a thousand months, approximately 83 years of worship.",
+      "It falls within the last ten nights of Ramadan and the Prophet \u262f said to seek it in the odd nights."
+    ]
+  },
+  {
+    answer: { name: "Ayat al-Kursi", variants: ["ayat al-kursi", "ayatul kursi", "ayat ul kursi", "the throne verse"] },
+    clues: [
+      "Abu Hurairah (RA) caught a thief stealing from the Zakat stores three nights in a row, the thief taught him this verse as protection.",
+      "The Prophet \u262f confirmed the thief was Shaytan himself, and that he had spoken the truth about it.",
+      "The Prophet \u262f said that whoever recites it after each obligatory prayer will have nothing preventing them from entering Jannah except death.",
+      "It describes the Kursi of Allah as extending over the heavens and the earth.",
+      "It is verse 255 of Surah Al-Baqarah and is described as the greatest verse in the Quran."
+    ]
+  },
+  {
+    answer: { name: "Ramadan", variants: ["ramadan", "ramadhan", "ramzan"] },
+    clues: [
+      "The Prophet \u262f said that in it the gates of heaven are opened, the gates of Hell are closed, and the devils are chained.",
+      "The Prophet \u262f would intensify his worship and charity in it to a degree unmatched in any other month, described as being more generous than the blowing wind.",
+      "It is the only month mentioned by name in the Quran, in a verse that also explains the wisdom behind the obligation it carries.",
+      "The Prophet \u262f said that whoever stands in prayer during its nights out of faith and seeking reward, his previous sins will be forgiven.",
+      "I'tikaf, seclusion in the mosque, in its last ten nights was a consistent practice of the Prophet \u262f every year until his death."
+    ]
+  },
+  {
+    answer: { name: "Eid al-Adha", variants: ["eid al-adha", "eid ul adha", "eid al adha", "eid ul-adha"] },
+    clues: [
+      "It falls on the same day that pilgrims at Hajj move from Muzdalifah and begin the most physically demanding part of their pilgrimage.",
+      "Its central act of worship is only valid during specific days and must be performed after a particular prayer, not before.",
+      "The animal sacrificed must meet specific conditions of age and health, and its meat must be distributed in a prescribed manner.",
+      "It commemorates a moment in which a prophet was commanded through a dream to do something so profound that Allah describes it as the most manifest of trials.",
+      "It is known as the greater of the two celebrations in Islam, yet its significance extends far beyond celebration into sacrifice, submission and gratitude."
+    ]
+  },
+  {
+    answer: { name: "Eid al-Fitr", variants: ["eid al-fitr", "eid ul fitr", "eid al fitr", "eid ul-fitr"] },
+    clues: [
+      "The Prophet \u262f said that on this day Allah boasts to His angels about those who fasted, saying He has fulfilled His promise to them and they have fulfilled theirs.",
+      "It cannot begin until an obligatory act of charity has been given on behalf of every member of the household, intended to purify the fast of any shortcomings.",
+      "The Prophet \u262f would not leave his home for the prayer until he had consumed an odd number of dates.",
+      "He would deliberately take two different routes to and from the prayer ground, a practice scholars say was to maximise the witnessing of his passage by the earth and its inhabitants.",
+      "It is one of only two days in the Islamic calendar that were designated by Allah as days of celebration, replacing two pre-Islamic festivals of the people of Madinah."
+    ]
+  },
+  {
+    answer: { name: "Muharram", variants: ["muharram", "muharrem"] },
+    clues: [
+      "The Prophet \u262f called it the sacred month of Allah, the only month attributed directly to Allah in this way.",
+      "He said that fasting in it after Ramadan is the most virtuous optional fast of the year.",
+      "The Battle of Karbala and the martyrdom of Husayn ibn Ali (RA) took place on its 10th day in 61AH.",
+      "It is one of the four sacred months in the Islamic calendar, during which sin is considered more grave and worship more rewarding.",
+      "It contains Ashura, the 10th day, which the Prophet \u262f fasted upon learning it was the day Musa (AS) was saved."
+    ]
+  },
+  {
+    answer: { name: "Dhul Hijjah", variants: ["dhul hijjah", "dhul hijja", "zul hijjah", "dhul-hijjah"] },
+    clues: [
+      "The Prophet \u262f said that no days of good deeds are more beloved to Allah than a specific set of days within it.",
+      "It is one of the four sacred months, yet it contains within it a single day whose fast alone expiates the sins of two entire years.",
+      "The Quran opens one of its shortest and most powerful surahs with an oath sworn by its first ten days, though they are not named explicitly.",
+      "It is the only month in the Islamic calendar during which one of the five pillars of Islam is performed, culminating in a day of slaughter and celebration.",
+      "It is the twelfth and final month of the Islamic lunar year, yet in terms of spiritual reward its opening days are considered among the most precious of the entire year."
+    ]
+  },
+  {
+    answer: { name: "Ashura", variants: ["ashura", "ashoura", "ashura day", "day of ashura"] },
+    clues: [
+      "It is a day on which the Prophet \u262f found an entire community already fasting upon his arrival in a new city, prompting him to investigate its significance.",
+      "The Prophet \u262f expressed his intention to add a neighbouring day to its fast the following year, to distinguish the Muslim observance from that of others.",
+      "It marks one of the greatest acts of divine salvation in prophetic history, the rescue of an entire nation from the most powerful ruler of his time.",
+      "It is also remembered as one of the most tragic days in Islamic history, marking the martyrdom of a beloved member of the Prophet's \u262f household.",
+      "Fasting on this single day is said to expiate the sins of the entire previous year."
+    ]
+  },
+  {
+    answer: { name: "Jumu'ah", variants: ["jumu'ah", "jumuah", "jum'ah", "friday prayer", "friday"] },
+    clues: [
+      "The Prophet \u262f said that any Muslim who dies between the evening of this day and the next morning is granted protection from the trial of the grave.",
+      "Three consecutive absences from its congregational prayer without a valid excuse are described in hadith as causing the heart to be sealed.",
+      "It is the one day of the week that has an entire surah of the Quran named after it.",
+      "It contains a concealed hour so powerful that no supplication made during it is turned away, with many scholars pointing to the time just before Maghrib as its most likely window.",
+      "Adam (AS) was created on this day, entered Jannah on this day, and descended from it on this day, making it the most consequential day in human history."
+    ]
+  }
+];
+
+// ── Helpers ──────────────────────────────────────────────────
+function getDailyQuestion() {
+  const epoch  = new Date('2024-01-01T00:00:00Z');
+  const now    = new Date();
+  const utcNow = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  return questions[Math.floor((utcNow - epoch) / 86400000) % questions.length];
+}
+
+function getTodayKey() {
+  const now = new Date();
+  return `kalemat-${now.getFullYear()}-${now.getMonth()}-${now.getDate()}`;
+}
+
+function getYesterdayKey() {
+  const y = new Date();
+  y.setDate(y.getDate() - 1);
+  return `kalemat-${y.getFullYear()}-${y.getMonth()}-${y.getDate()}`;
+}
+
+function formatDate(d) {
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' });
+}
+
+function updateCountdown(el) {
+  const now      = new Date();
+  const tomorrow = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
+  const diff     = tomorrow - now;
+  const h = Math.floor(diff / 3600000);
+  const m = Math.floor((diff % 3600000) / 60000);
+  const s = Math.floor((diff % 60000) / 1000);
+  el.textContent = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+}
+
+// ── Stats ────────────────────────────────────────────────────
+const STATS_KEY = 'kalemat-stats';
+
+function loadStats() {
+  const raw = localStorage.getItem(STATS_KEY);
+  return raw ? JSON.parse(raw) : {
+    played: 0, wins: 0, currentStreak: 0, maxStreak: 0,
+    distribution: { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0, X: 0 }
+  };
+}
+
+function saveStats(stats) { localStorage.setItem(STATS_KEY, JSON.stringify(stats)); }
+
+function recordResult(correct, cluesUsed) {
+  const stats     = loadStats();
+  const yesterday = localStorage.getItem(getYesterdayKey());
+  stats.played++;
+  if (correct) {
+    stats.wins++;
+    stats.currentStreak = yesterday ? stats.currentStreak + 1 : 1;
+    if (stats.currentStreak > stats.maxStreak) stats.maxStreak = stats.currentStreak;
+    stats.distribution[cluesUsed] = (stats.distribution[cluesUsed] || 0) + 1;
+  } else {
+    stats.currentStreak = 0;
+    stats.distribution['X'] = (stats.distribution['X'] || 0) + 1;
+  }
+  saveStats(stats);
+  return stats;
+}
+
+function renderStats(highlightClue) {
+  const stats  = loadStats();
+  const winPct = stats.played > 0 ? Math.round((stats.wins / stats.played) * 100) : 0;
+  document.getElementById('sPlayed').textContent    = stats.played;
+  document.getElementById('sWinPct').textContent    = winPct + '%';
+  document.getElementById('sStreak').textContent    = stats.currentStreak;
+  document.getElementById('sMaxStreak').textContent = stats.maxStreak;
+
+  const distRows = document.getElementById('distRows');
+  distRows.innerHTML = '';
+  const keys   = [1, 2, 3, 4, 5, 'X'];
+  const labels = ['1', '2', '3', '4', '5', '✗'];
+  const maxVal = Math.max(...keys.map(k => stats.distribution[k] || 0), 1);
+
+  keys.forEach((k, i) => {
+    const count = stats.distribution[k] || 0;
+    const pct   = Math.max(Math.round((count / maxVal) * 100), count > 0 ? 8 : 4);
+    const isHL  = highlightClue !== undefined && k === highlightClue;
+    const row   = document.createElement('div');
+    row.className = 'dist-row';
+    row.innerHTML = `
+      <span class="dist-label">${labels[i]}</span>
+      <div class="dist-bar-wrap">
+        <div class="dist-bar ${isHL ? (k === 'X' ? 'highlight' : 'green') : ''}" style="width:${pct}%">${count}</div>
+      </div>`;
+    distRows.appendChild(row);
+  });
+}
+
+// ── Modal ────────────────────────────────────────────────────
+const modalOverlay = document.getElementById('modalOverlay');
+document.getElementById('statsBtn').addEventListener('click', () => { renderStats(); modalOverlay.classList.add('open'); });
+document.getElementById('modalClose').addEventListener('click', () => modalOverlay.classList.remove('open'));
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('open'); });
+
+// ── Game state ───────────────────────────────────────────────
+const q          = getDailyQuestion();
+const todayKey   = getTodayKey();
+const allAnswers = questions.map(x => x.answer);
+let clueIndex = 0, guessCount = 0, selectedAnswer = null, done = false;
+const MAX_GUESSES = 5;
+
+const cluesArea        = document.getElementById('cluesArea');
+const guessInput       = document.getElementById('guessInput');
+const submitBtn        = document.getElementById('submitBtn');
+const resultToast      = document.getElementById('resultToast');
+const autocompleteList = document.getElementById('autocompleteList');
+const attemptDots      = document.getElementById('attemptDots');
+const shareBtn         = document.getElementById('shareBtn');
+const comeback         = document.getElementById('comeback');
+const countdownEl      = document.getElementById('countdown');
+const playedBanner     = document.getElementById('playedBanner');
+const gameArea         = document.getElementById('gameArea');
+
+document.getElementById('dateLabel').textContent = formatDate(new Date());
+
+const savedResult = localStorage.getItem(todayKey);
+if (savedResult) {
+  showAlreadyPlayed(JSON.parse(savedResult));
+} else {
+  initGame();
+}
+
+function showAlreadyPlayed(result) {
+  gameArea.style.display = 'none';
+  playedBanner.classList.add('show');
+  const pbResult = document.getElementById('pbResult');
+  pbResult.style.color = result.correct ? 'var(--green)' : '#f85149';
+  pbResult.textContent  = result.correct
+    ? `\u2713 You got it in clue ${result.cluesUsed} \u2014 ${q.answer.name}`
+    : `\u2717 The answer was: ${q.answer.name}`;
+  const cb = document.getElementById('countdownBanner');
+  updateCountdown(cb);
+  setInterval(() => updateCountdown(cb), 1000);
+  document.getElementById('shareBtnBanner').addEventListener('click', () => shareResult(result));
+}
+
+function initGame() {
+  q.clues.forEach((clue, i) => {
+    const card = document.createElement('div');
+    card.className = 'clue-card';
+    card.id = `clue-${i}`;
+    card.innerHTML = `<span class="clue-number">${i + 1}</span><span class="clue-text">${clue}</span>`;
+    cluesArea.appendChild(card);
+  });
+  for (let i = 0; i < MAX_GUESSES; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'attempt-dot';
+    dot.id = `dot-${i}`;
+    attemptDots.appendChild(dot);
+  }
+  revealClue(0, true);
+}
+
+function revealClue(index, isFirst = false) {
+  const card = document.getElementById(`clue-${index}`);
+  if (!card) return;
+  if (isFirst) card.classList.add('first-reveal');
+  setTimeout(() => card.classList.add('revealed'), isFirst ? 20 : 80);
+  clueIndex = index;
+}
+
+guessInput.addEventListener('input', () => {
+  const val = guessInput.value;
+  if (!val || val.length < 2) { autocompleteList.style.display = 'none'; selectedAnswer = null; return; }
+  const lq = val.toLowerCase();
+  const matches = allAnswers.filter(a =>
+    a.name.toLowerCase().includes(lq) || a.variants.some(v => v.toLowerCase().includes(lq))
+  );
+  if (!matches.length) { autocompleteList.style.display = 'none'; return; }
+  autocompleteList.innerHTML = '';
+  matches.forEach(m => {
+    const item = document.createElement('div');
+    item.className = 'autocomplete-item';
+    const alts = m.variants.filter(v => v.toLowerCase() !== m.name.toLowerCase()).slice(0,2).join(', ');
+    item.innerHTML = `<span class="item-name">${m.name}</span>${alts ? `<span class="item-alt">Also: ${alts}</span>` : ''}`;
+    item.addEventListener('mousedown', e => { e.preventDefault(); selectAnswer(m); });
+    autocompleteList.appendChild(item);
+  });
+  autocompleteList.style.display = 'block';
+});
+
+guessInput.addEventListener('blur', () => { setTimeout(() => { autocompleteList.style.display = 'none'; }, 150); });
+
+function selectAnswer(match) {
+  selectedAnswer = match;
+  guessInput.value = match.name;
+  autocompleteList.style.display = 'none';
+}
+
+submitBtn.addEventListener('click', submitGuess);
+guessInput.addEventListener('keydown', e => { if (e.key === 'Enter') submitGuess(); });
+
+function submitGuess() {
+  if (done) return;
+  const val = guessInput.value.trim().toLowerCase();
+  if (!val) return;
+  const isCorrect = selectedAnswer
+    ? selectedAnswer.name === q.answer.name
+    : q.answer.variants.some(v => v === val) || q.answer.name.toLowerCase() === val;
+  const dot = document.getElementById(`dot-${guessCount}`);
+  if (dot) dot.classList.add(isCorrect ? 'correct' : 'wrong');
+  guessCount++;
+  if (isCorrect) {
+    endGame(true);
+  } else {
+    guessInput.classList.add('shake');
+    setTimeout(() => guessInput.classList.remove('shake'), 400);
+    guessInput.value = '';
+    selectedAnswer = null;
+    if (guessCount >= MAX_GUESSES) endGame(false);
+    else revealClue(guessCount);
+  }
+}
+
+function endGame(correct) {
+  done = true;
+  submitBtn.disabled = true;
+  guessInput.disabled = true;
+  for (let i = clueIndex + 1; i < q.clues.length; i++) {
+    setTimeout(() => revealClue(i), (i - clueIndex) * 150);
+  }
+  resultToast.className = 'result-toast ' + (correct ? 'correct' : 'wrong-final');
+  resultToast.innerHTML = correct
+    ? `\u2713 Correct! Mashallah.<div class="result-answer">${q.answer.name}</div>`
+    : `\u2717 The answer was: <strong>${q.answer.name}</strong>`;
+  const cluesUsed = correct ? clueIndex + 1 : 'X';
+  const result    = { correct, cluesUsed, guesses: guessCount };
+  localStorage.setItem(todayKey, JSON.stringify(result));
+  recordResult(correct, cluesUsed);
+  shareBtn.classList.add('show');
+  comeback.classList.add('show');
+  updateCountdown(countdownEl);
+  setInterval(() => updateCountdown(countdownEl), 1000);
+  shareBtn.addEventListener('click', () => shareResult(result));
+  setTimeout(() => { renderStats(cluesUsed); modalOverlay.classList.add('open'); }, 1800);
+}
+
+function shareResult(result) {
+  const dateStr = formatDate(new Date());
+  const dots = Array.from({ length: MAX_GUESSES }, (_, i) => {
+    if (i < result.guesses) return (i === result.guesses - 1 && result.correct) ? '\uD83D\uDFE9' : '\uD83D\uDFE5';
+    return '\u2B1B';
+  });
+  const text = `\u263D \u0643\u064E\u0644\u0650\u0645\u064E\u0627\u062A \u2014 ${dateStr}\n${dots.join('')}\n${result.correct ? `Got it in clue ${result.cluesUsed}!` : 'Better luck tomorrow!'}\n\nPlay at thekalemat.com`;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.activeElement;
+    const orig = btn.textContent;
+    btn.textContent = '\u2713 Copied to clipboard!';
+    setTimeout(() => { btn.textContent = orig; }, 2000);
+  });
+}
+</script>
+</body>
+</html>
